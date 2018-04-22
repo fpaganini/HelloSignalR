@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Hello SignalR</title>
+</head>
+<body>
+
+</body>
+</html>
+
+
+<script src="Scripts/jquery-1.6.4.js"></script>
+<script src="Scripts/jquery.signalR-2.2.3.js"></script>
+
+<script src="signalr/hubs"></script>
+
+
+
+<script>
+    $(function () {
+
+        var $hub = $.connection.hub;
+        var $helloSignalHub = $.connection.helloSignalHub;
+
+        //Iniciando conexão
+        $hub.start().done(function () {
+            $helloSignalHub.server.hello("Mensagem Enviada pelo cliente");
+        }).fail(function () {
+            alert("Falha ao iniciar a conexão com o servidor");
+        });
+
+
+        //Recebendo mensagem do servidor
+        $helloSignalHub.client.hello = function (mensagem) {
+            alert(mensagem);
+        }
+
+    });
+</script>

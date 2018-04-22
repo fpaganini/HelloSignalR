@@ -1,0 +1,184 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+
+
+<div class="row">
+    <div class="col-lg-12" id="stage">
+
+        <div class="jumbotron">
+            <h1>Chat SignalR</h1>
+            <p class="lead">
+                Este é um chat com SignalR
+            </p>
+            <hr />
+            <p>Clique em iniciar chat, informe seu nic, e aproveite.</p>
+            <button type="button" id="btnIniciaChat" class="btn btn-primary" data-toggle="modal" data-target="#modalNomeUsuario">Iniciar Chat</button>
+        </div>
+
+
+    </div>
+</div>
+
+
+<div class="modal fade" id="modalNomeUsuario" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                Iniciar o Chat
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Informe o seu NICK</label>
+                    <input type="text" class="form-control" id="txtNickName" placeholder="Seu Nick" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="StartChat()" data-dismiss="modal">Iniciar</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+@section script
+{
+    <script src="~/Scripts/jquery.signalR-2.2.3.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+
+    <script>
+
+        var hub;
+        var chatHub;
+        var mensagens;
+        var nickName;
+
+        function StartChat() {
+            $("#btnIniciaChat").attr("disabled", "disabled");
+            hub.start().done(function () {
+
+
+
+                $("#stage").html("");
+
+                nickName = $("#txtNickName").val();
+                var $alert = $("<div>")
+                    .attr("class", "alert alert-success alert-dismissible")
+                    .attr("role", "alert")
+                    .html("Bem vindo " + nickName + ". Você está conectado na sala.").prependTo($("#stage"));
+                var $closeAlert = $("<button>")
+                    .attr("class", "close")
+                    .attr("data-dismiss", "alert")
+                    .attr("aria-label", "close").appendTo($alert);
+                var $closeAlertIcon = $("<span>")
+                    .attr("aria-hidden", "true")
+                    .html("&times;")
+                    .appendTo($closeAlert);
+
+                mensagens = $("<ul>")
+                    .attr("class", "list-group")
+                    .appendTo($("#stage"));
+
+                mensagens.load('@Url.Action("Historico","Chat")', function () {
+                    $("<br>").appendTo($("#stage"));
+
+                    var divFormGroup = $("<div>")
+                        .attr("class", "input-group")
+                        .appendTo($("#stage"));
+
+
+
+                    var txtNovaMensagem = $("<input>")
+                        .attr("type", "text")
+                        .attr("class", "form-control")
+                        .attr("id", "txtNovaMensagem")
+                        .attr("placeholder", "Escreva aqui sua nova mensagem")
+                        .appendTo(divFormGroup);
+
+                    var divBtn = $("<div>")
+                        .attr("class", "input-group-append")
+                        .appendTo(divFormGroup);
+
+                    var btnNovaMensagem = $("<button>")
+                        .attr("class", "btn btn-outline-secundary")
+                        .attr("type", "button")
+                        .html("Enviar Mensagem")
+                        .appendTo(divBtn)
+                        .click(function () {
+                            //Enviando mensagem para o servidor
+                            chatHub.server.enviaMensagem(nickName, txtNovaMensagem.val());
+                            $("#txtNovaMensagem").val("");
+                            $("#txtNovaMensagem").focus();
+                        });
+
+
+
+                    txtNovaMensagem.keydown(function (e) {
+                        if (e.keyCode == 13) {
+                            btnNovaMensagem.click();
+                        }
+                    });
+
+                    txtNovaMensagem.focus();
+
+                    chatHub.server.novoUsuario(nickName);
+
+
+            });
+
+
+
+            }).fail(function () {
+                var $alert = $("<div>")
+                    .attr("class", "alert alert-danger alert-dismissible")
+                    .attr("role", "alert")
+                    .html("Falha ao iniciar uma conexão com o servidor").appendTo($("#stage"));
+                var $closeAlert = $("<button>")
+                    .attr("class", "close")
+                    .attr("data-dismiss", "alert")
+                    .attr("aria-label", "close").appendTo($alert);
+                var $closeAlertIcon = $("<span>")
+                    .attr("aria-hidden", "true")
+                    .html("&times;")
+                    .appendTo($closeAlert);
+
+                $("#btnIniciaChat").removeAttr("disabled");
+
+
+            });
+        }
+
+        $(document).ready(function () {
+            hub = $.connection.hub;
+            chatHub = $.connection.chatHub;
+            chatHub.client.enviaMensagem = function (usuario, mensagem) {
+                $("<li>")
+                    .attr("class", "list-group-item")
+                    .html("<b>" + usuario + " :</b> " + mensagem)
+                    .appendTo(mensagens);
+
+                $('#txtNovaMensagem').get(0).scrollIntoView();
+            }
+
+            chatHub.client.novoUsuario = function (usuario) {
+                $("<li>")
+                    .attr("class", "list-group-item list-group-item-info")
+                    .html(usuario + " se conectou na sala. Dê as boas vindas.")
+                    .appendTo(mensagens);
+            }
+
+
+
+        });
+    </script>
+
+
+}

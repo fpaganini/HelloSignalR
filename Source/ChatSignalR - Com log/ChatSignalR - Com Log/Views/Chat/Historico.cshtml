@@ -1,0 +1,14 @@
+﻿@model List<ChatSignalR.Models.LogMenssagem>
+@{
+    Layout = null;
+}
+
+@foreach (var item in Model)
+{
+    <li class="list-group-item list-group-item-light"><b>@item.NickName: </b>@item.Menssagem</li>
+}
+
+
+
+
+
